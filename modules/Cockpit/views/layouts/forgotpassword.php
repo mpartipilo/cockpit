@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="uk-height-1-1 uk-bg-dark" lang="en" data-base="@base('/')" data-route="@route('/')">
+<html lang="{{ $app('i18n')->locale }}" class="uk-height-1-1 uk-bg-dark" data-base="@base('/')" data-route="@route('/')" data-locale="{{ $app('i18n')->locale }}">
 <head>
     <meta charset="UTF-8">
     <title>@lang('Password Reset!')</title>
@@ -60,7 +60,7 @@
                 </div>
 
                 <div class="uk-margin-top" show="{ !reset }">
-                    <button class="uk-button uk-button-outline uk-button-large uk-button-primary uk-width-1-1">@lang('Reset')</button>
+                    <button class="uk-button uk-button-outline uk-button-large uk-text-primary uk-width-1-1">@lang('Reset')</button>
                 </div>
             </div>
 
@@ -87,8 +87,8 @@
                     this.update();
 
                 }.bind(this)).catch(function(data) {
-                    
-                    this.error = 'No User found';
+
+                    this.error = '@lang("User does not exist")';
 
                     App.$('#reset-dialog').removeClass('uk-animation-shake');
 

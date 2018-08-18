@@ -16,8 +16,8 @@ class RestApi extends \LimeExtra\Controller {
             }
         }
 
-        $params  = $this->param("params", []);
-        $content = $this->module("regions")->render($name, $params);
+        $params  = $this->param('params', []);
+        $content = $this->module('regions')->render($name, $params);
 
         return is_null($content) ? false : $content;
     }
@@ -46,14 +46,14 @@ class RestApi extends \LimeExtra\Controller {
 
             $fieldsFilter = [];
 
-            if ($user) $fieldsFilter["user"] = $user;
+            if ($user) $fieldsFilter['user'] = $user;
 
             $_items = [$region['data']];
             $_items = cockpit_populate_collection($_items, intval($this->param('populate')), 0, $fieldsFilter);
             $region['data'] = $_items[0];
         }
 
-        return isset($region['data']) ? $region['data'] : [];
+        return $region['data'] ?? [];
     }
 
     public function listRegions($extended = false) {

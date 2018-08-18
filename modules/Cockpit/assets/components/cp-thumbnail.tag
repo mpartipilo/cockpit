@@ -59,7 +59,7 @@
 
             requestAnimationFrame(function() {
 
-                if (_src.match(/^(http\:|https\:|\/\/)/)) {
+                if (_src.match(/^(http\:|https\:|\/\/)/) && !(_src.includes(ASSETS_URL) || _src.includes(SITE_URL))) {
 
                     src = _src;
 
@@ -72,7 +72,7 @@
 
                 App.request('/cockpit/utils/thumb_url', {src:_src,w:opts.width,h:opts.height,m:mode}, 'text').then(function(url){
 
-                    if (_src.match(/\.svg$/i)) {
+                    if (_src.match(/\.(svg|ico)$/i)) {
                         url = _src;
                     }
 

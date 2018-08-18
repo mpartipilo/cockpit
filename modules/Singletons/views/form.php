@@ -11,7 +11,7 @@
         <li><a href="@route('/singletons')">@lang('Singletons')</a></li>
         <li class="uk-active" data-uk-dropdown>
 
-            <a><i class="uk-icon-bars"></i> {{ @$singleton['label'] ? $singleton['label']:$singleton['name'] }}</a>
+            <a><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$singleton['label'] ? $singleton['label']:$singleton['name']) }}</a>
 
             @if($app->module('singletons')->hasaccess($singleton['name'], 'edit'))
             <div class="uk-dropdown">
@@ -38,7 +38,7 @@
 
         @if($singleton['description'])
         <div class="uk-margin uk-text-muted">
-            {{ $singleton['description'] }}
+            {{ htmlspecialchars($singleton['description']) }}
         </div>
         @endif
 
@@ -91,8 +91,8 @@
                     </div>
 
                     <div class="uk-margin-large-top">
-                        <button class="uk-button uk-button-large uk-button-primary uk-margin-right">@lang('Save')</button>
-                        <a href="@route('/singletons')">@lang('Close')</a>
+                        <button class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
+                        <a class="uk-button uk-button-link" href="@route('/singletons')">@lang('Close')</a>
                     </div>
 
                 </form>
@@ -115,6 +115,16 @@
                             </select>
                         </div>
 
+                    </div>
+
+                    <div class="uk-margin">
+                        <label class="uk-text-small">@lang('Revisions')</label>
+                        <div class="uk-margin-small-top">
+                            <span class="uk-position-relative">
+                                <cp-revisions-info class="uk-badge uk-text-large" rid="{singleton._id}"></cp-revisions-info>
+                                <a class="uk-position-cover" href="@route('/singletons/revisions/'.$singleton['name'])/{singleton._id}"></a>
+                            </span>
+                        </div>
                     </div>
 
                     <div class="uk-margin">
@@ -246,6 +256,10 @@
                             }
                         });
 
+                        if ($this.tags['cp-revisions-info']) {
+                            $this.tags['cp-revisions-info'].sync();
+                        }
+
                         $this.update();
 
                     } else {
@@ -273,9 +287,10 @@
             copyLocalizedValue(e) {
 
                 var field = e.target.getAttribute('field'),
-                    lang = e.target.getAttribute('lang');
+                    lang = e.target.getAttribute('lang'),
+                    val  = JSON.stringify(this.data[field+(lang ? '_':'')+lang]);
 
-                this.data[field+(this.lang ? '_':'')+this.lang] = this.data[field+(lang ? '_':'')+lang];
+                this.data[field+(this.lang ? '_':'')+this.lang] = JSON.parse(val);
             }
 
         </script>

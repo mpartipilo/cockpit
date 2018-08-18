@@ -11,7 +11,7 @@
         <li><a href="@route('/regions')">@lang('Regions')</a></li>
         <li class="uk-active" data-uk-dropdown>
 
-            <a><i class="uk-icon-bars"></i> {{ @$region['label'] ? $region['label']:$region['name'] }}</a>
+            <a><i class="uk-icon-bars"></i> {{ htmlspecialchars(@$region['label'] ? $region['label']:$region['name']) }}</a>
 
             @if($app->module('regions')->hasaccess($region['name'], 'edit'))
             <div class="uk-dropdown">
@@ -38,7 +38,7 @@
 
         @if($region['description'])
         <div class="uk-margin uk-text-muted">
-            {{ $region['description'] }}
+            {{ htmlspecialchars($region['description']) }}
         </div>
         @endif
 
@@ -79,8 +79,8 @@
                     </div>
 
                     <div class="uk-margin-large-top">
-                        <button class="uk-button uk-button-large uk-button-primary uk-margin-right">@lang('Save')</button>
-                        <a href="@route('/regions')">@lang('Close')</a>
+                        <button class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
+                        <a class="uk-button uk-button-link" href="@route('/regions')">@lang('Close')</a>
                     </div>
 
                 </form>

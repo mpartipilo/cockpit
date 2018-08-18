@@ -59,6 +59,11 @@
                        <label class="uk-text-small">@lang('Description')</label>
                        <textarea class="uk-width-1-1 uk-form-large" name="description" bind="singleton.description" rows="5"></textarea>
                    </div>
+
+                    <div class="uk-margin">
+                        <field-boolean bind="singleton.in_menu" title="@lang('Show in system menu')" label="@lang('Show in system menu')"></field-boolean>
+                    </div>
+                    
                </div>
 
             </div>
@@ -115,7 +120,6 @@
                                         <strong class="uk-text-uppercase">@lang('Singleton')</strong>
                                         <div class="uk-margin-top"><field-boolean bind="singleton.acl.{group}.form" label="@lang('Form')"></field-boolean></div>
                                         <div class="uk-margin-top"><field-boolean bind="singleton.acl.{group}.edit" label="@lang('Edit Singleton')"></field-boolean></div>
-                                        <div class="uk-margin-top"><field-boolean bind="singleton.acl.{group}.render" label="@lang('Render Singleton')"></field-boolean></div>
                                         <div class="uk-margin-top"><field-boolean bind="singleton.acl.{group}.data" label="@lang('Get Singleton Data')"></field-boolean></div>
                                     </div>
                                 </div>
@@ -127,12 +131,12 @@
 
                     <div class="uk-margin-large-top">
 
-                        <div class="uk-button-group uk-margin-right">
+                        <div class="uk-button-group">
                             <button class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
-                            <a class="uk-button uk-button-large" href="@route('/singletons/form')/{ singleton.name }" if="{ singleton._id }"><i class="uk-icon-eye"></i> @lang('Show form')</a>
+                            <a class="uk-button uk-button-large" href="@route('/singletons/form')/{ singleton.name }" if="{ singleton._id }">@lang('Show form')</a>
                         </div>
 
-                        <a href="@route('/singletons')">
+                        <a class="uk-button uk-button-large uk-button-link" href="@route('/singletons')">
                             <span show="{ !singleton._id }">@lang('Cancel')</span>
                             <span show="{ singleton._id }">@lang('Close')</span>
                         </a>

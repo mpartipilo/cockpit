@@ -21,7 +21,7 @@ class RestApi extends \LimeExtra\Controller {
         if ($lang = $this->param('lang', false)) $options['lang'] = $lang;
         if ($populate = $this->param('populate', false)) $options['populate'] = $populate;
         if ($ignoreDefaultFallback = $this->param('ignoreDefaultFallback', false)) $options['ignoreDefaultFallback'] = $ignoreDefaultFallback;
-        if ($user) $options["user"] = $user;
+        if ($user) $options['user'] = $user;
 
         $data = $this->module('singletons')->getData($name, $options);
 
@@ -29,7 +29,7 @@ class RestApi extends \LimeExtra\Controller {
             return false;
         }
 
-        return $field ? (isset($data[$field]) ? $data[$field] : null) : $data;
+        return $field ? ($data[$field] ?? null) : $data;
     }
 
     public function listSingletons($extended = false) {

@@ -36,13 +36,13 @@
         <img class="uk-svg-adjust" src="@url($collection['icon'] ? 'assets:app/media/icons/'.$collection['icon']:'collections:icon.svg')" width="50" alt="icon" data-uk-svg>
         @if($collection['description'])
         <div class="uk-container-center uk-margin-top uk-width-medium-1-2">
-            {{ $collection['description'] }}
+            {{ htmlspecialchars($collection['description']) }}
         </div>
         @endif
     </div>
 
 
-    <div show="{ ready }">
+    <div>
 
         <div class="uk-width-medium-1-3 uk-viewport-height-1-2 uk-container-center uk-text-center uk-flex uk-flex-center uk-flex-middle" if="{ loading }">
 
@@ -61,7 +61,7 @@
                 <img class="uk-svg-adjust" src="@url($collection['icon'] ? 'assets:app/media/icons/'.$collection['icon']:'collections:icon.svg')" width="50" alt="icon" data-uk-svg>
                 @if($collection['description'])
                 <div class="uk-margin-top uk-text-small uk-text-muted">
-                    {{ $collection['description'] }}
+                    {{ htmlspecialchars($collection['description']) }}
                 </div>
                 @endif
                 <hr>
@@ -93,14 +93,21 @@
 
             <div class="uk-float-right">
 
-                @if($app->module('collections')->hasaccess($collection['name'], 'entries_delete'))
-                <a class="uk-button uk-button-large uk-button-danger uk-animation-fade uk-margin-small-right" onclick="{ removeselected }" if="{ selected.length }">
-                    @lang('Delete') <span class="uk-badge uk-badge-contrast uk-margin-small-left">{ selected.length }</span>
-                </a>
-                @endif
+                <div class="uk-display-inline-block uk-margin-small-right" data-uk-dropdown="mode:'click'" if="{ selected.length }">
+                    <button class="uk-button uk-button-large uk-animation-fade">@lang('Batch Action') <span class="uk-badge uk-badge-contrast uk-margin-small-left">{ selected.length }</span></button>
+                    <div class="uk-dropdown">
+                        <ul class="uk-nav uk-nav-dropdown uk-dropdown-close">
+                            <li class="uk-nav-header">@lang('Actions')</li>
+                            <li><a onclick="{ batchedit }">@lang('Edit')</a></li>
+                            @if($app->module('collections')->hasaccess($collection['name'], 'entries_delete'))
+                            <li class="uk-nav-item-danger"><a onclick="{ removeselected }">@lang('Delete')</a></li>
+                            @endif
+                        </ul>
+                    </div>
+                </div>
 
                 @if($app->module('collections')->hasaccess($collection['name'], 'entries_create'))
-                <a class="uk-button uk-button-large uk-button-primary" href="@route('/collections/entry/'.$collection['name'])"><i class="uk-icon-plus-circle uk-icon-justify"></i> @lang('Entry')</a>
+                <a class="uk-button uk-button-large uk-button-primary" href="@route('/collections/entry/'.$collection['name'])">@lang('Add Entry')</a>
                 @endif
             </div>
         </div>
@@ -167,7 +174,7 @@
                     </div>
 
                     <div class="uk-margin-top uk-scrollable-box">
-                        <div class="uk-margin-small-bottom" each="{field,idy in parent.fields}" if="{ field.name != '_modified' && field.name != '_created' && hasFieldAccess(field.name) }">
+                        <div class="uk-margin-small-bottom" each="{field,idy in parent.fields}" if="{ field.name != '_modified' && field.name != '_created' }">
                             <span class="uk-text-small uk-text-uppercase uk-text-muted">{ field.label || field.name }</span>
                             <a class="uk-link-muted uk-text-small uk-display-block uk-text-truncate" href="@route('/collections/entry/'.$collection['name'])/{ parent.entry._id }">
                                 <raw content="{ App.Utils.renderValue(field.type, parent.entry[field.name]) }" if="{parent.entry[field.name] !== undefined}"></raw>
@@ -180,19 +187,18 @@
 
         </div>
 
-        <div class="uk-overflow-container uk-margin-large-top" if="{ entries.length && !loading && listmode=='list' }">
+        <div class="uk-margin-large-top uk-overflow-container" if="{ entries.length && !loading && listmode=='list' }">
             <table class="uk-table uk-table-tabbed uk-table-striped">
                 <thead>
                     <tr>
-                        @if($app->module('collections')->hasaccess($collection['name'], 'entries_delete'))
-                        <th width="20"><input type="checkbox" data-check="all"></th>
-                        @endif
-                        <th width="{field.name == '_modified' || field.name == '_created' ? '80':''}" class="uk-text-small" each="{field,idx in fields}" if="{ hasFieldAccess(field.name) }">
-                            <a class="uk-link-muted uk-noselect { parent.sortedBy == field.name ? 'uk-text-primary':'' }" onclick="{ parent.updatesort }" data-sort="{ field.name }">
+                        <th width="20"><input class="uk-checkbox" type="checkbox" data-check="all"></th>
+                        <th width="{field.name == '_modified' || field.name == '_created' ? '100':''}" class="uk-text-small" each="{field,idx in fields}">
+
+                            <a class="uk-link-muted uk-noselect { (parent.sort[field.name] || parent.sort[field.name+'.display']) ? 'uk-text-primary':'' }" onclick="{ parent.updatesort }" data-sort="{ field.name }">
 
                                 { field.label || field.name }
 
-                                <span if="{parent.sortedBy == field.name}" class="uk-icon-long-arrow-{ parent.sortedOrder == 1 ? 'up':'down'}"></span>
+                                <span if="{(parent.sort[field.name] || parent.sort[field.name+'.display'])}" class="uk-icon-long-arrow-{ (parent.sort[field.name] == 1 || parent.sort[field.name+'.display']==1) ? 'up':'down'}"></span>
                             </a>
                         </th>
                         <th width="20"></th>
@@ -200,10 +206,8 @@
                 </thead>
                 <tbody>
                     <tr each="{entry,idx in entries}">
-                        @if($app->module('collections')->hasaccess($collection['name'], 'entries_delete'))
-                        <td><input type="checkbox" data-check data-id="{ entry._id }"></td>
-                        @endif
-                        <td class="uk-text-truncate" each="{field,idy in parent.fields}" if="{ field.name != '_modified' && field.name != '_created' && hasFieldAccess(field.name) }">
+                        <td><input class="uk-checkbox" type="checkbox" data-check data-id="{ entry._id }"></td>
+                        <td class="uk-text-truncate" each="{field,idy in parent.fields}" if="{ field.name != '_modified' && field.name != '_created' }">
                             <a class="uk-link-muted" href="@route('/collections/entry/'.$collection['name'])/{ parent.entry._id }">
                                 <raw content="{ App.Utils.renderValue(field.type, parent.entry[field.name]) }" if="{parent.entry[field.name] !== undefined}"></raw>
                                 <span class="uk-icon-eye-slash uk-text-muted" if="{parent.entry[field.name] === undefined}"></span>
@@ -265,26 +269,47 @@
                 <a class="uk-button uk-button-small" onclick="{ loadpage.bind(this, page+1) }" if="{page+1 <= pages}">@lang('Next')</a>
             </div>
 
+            <div class="uk-margin-small-right" data-uk-dropdown="mode:'click'">
+                <a class="uk-button uk-button-link uk-button-small uk-text-muted">{limit}</a>
+                <div class="uk-dropdown">
+                    <ul class="uk-nav uk-nav-dropdown">
+                        <li class="uk-nav-header">@lang('Show')</li>
+                        <li><a onclick="{updateLimit.bind(this, 20)}">20</a></li>
+                        <li><a onclick="{updateLimit.bind(this, 40)}">40</a></li>
+                        <li><a onclick="{updateLimit.bind(this, 80)}">80</a></li>
+                        <li><a onclick="{updateLimit.bind(this, 100)}">100</a></li>
+                        <li class="uk-nav-divider"></li>
+                        <li><a onclick="{updateLimit.bind(this, null)}">@lang('All')</a></li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
 
         </div>
 
     </div>
 
+    <entries-batchedit collection="{collection}" fields={fieldsidx}></entries-batchedit>
+
 
     <script type="view/script">
 
-        var $this = this, $root = App.$(this.root), limit = 20;
+        var $this = this, $root = App.$(this.root);
 
-        this.ready      = false;
         this.collection = {{ json_encode($collection) }};
         this.loadmore   = false;
+        this.loading    = true;
         this.count      = 0;
         this.page       = 1;
+        this.limit      = 20;
         this.entries    = [];
         this.fieldsidx  = {};
         this.imageField = null;
+
         this.fields     = this.collection.fields.filter(function(field){
+
+            if (!CollectionHasFieldAccess(field)) return false;
 
             $this.fieldsidx[field.name] = field;
 
@@ -314,13 +339,40 @@
                 }
 
                 $this.checkselected();
-
                 $this.update();
             });
 
-            this.load();
+            window.addEventListener('popstate', function(e) {
+                $this.initState();
+            });
 
+            $this.initState();
         });
+
+        initState() {
+
+            var searchParams = new URLSearchParams(location.search);
+
+            if (searchParams.has('q')) {
+
+                try {
+
+                    var q = JSON.parse(searchParams.get('q'));
+
+                    if (q.sort) this.sort = q.sort;
+                    if (q.page) this.page = q.page;
+                    if (q.limit) this.limit = (parseInt(q.limit) || 20);
+                    if (q.filter) {
+                        this.filter = q.filter;
+                        this.refs.txtfilter.value = q.filter;
+                    }
+
+                } catch(e){}
+            }
+
+            this.load();
+            this.update();
+        }
 
         remove(e, entry, idx) {
 
@@ -351,44 +403,46 @@
 
         removeselected() {
 
-            if (this.selected.length) {
-
-                App.ui.confirm("Are you sure?", function() {
-
-                    var promises = [];
-
-                    this.entries = this.entries.filter(function(entry, yepp){
-
-                        yepp = ($this.selected.indexOf(entry._id) === -1);
-
-                        if (!yepp) {
-                            promises.push(App.request('/collections/delete_entries/'+$this.collection.name, {filter: {'_id':entry._id}}));
-                        }
-
-                        return yepp;
-                    });
-
-                    Promise.all(promises).then(function(){
-
-                        App.ui.notify("Entries removed", "success");
-
-                        $this.loading = false;
-
-                        if ($this.pages > 1 && !$this.entries.length) {
-                            $this.page = $this.page == 1 ? 1 : $this.page - 1;
-                            $this.load();
-                        } else {
-                            $this.update();
-                        }
-
-                    });
-
-                    this.loading = true;
-                    this.update();
-                    this.checkselected(true);
-
-                }.bind(this));
+            if (!this.selected.length) {
+                return;
             }
+
+            App.ui.confirm("Are you sure?", function() {
+
+                var promises = [];
+
+                this.entries = this.entries.filter(function(entry, yepp){
+
+                    yepp = ($this.selected.indexOf(entry._id) === -1);
+
+                    if (!yepp) {
+                        promises.push(App.request('/collections/delete_entries/'+$this.collection.name, {filter: {'_id':entry._id}}));
+                    }
+
+                    return yepp;
+                });
+
+                Promise.all(promises).then(function(){
+
+                    App.ui.notify(promises.length > 1 ? (promises.length + " entries removed") : "Entry removed", "success");
+
+                    $this.loading = false;
+
+                    if ($this.pages > 1 && !$this.entries.length) {
+                        $this.page = $this.page == 1 ? 1 : $this.page - 1;
+                        $this.load();
+                    } else {
+                        $this.update();
+                    }
+
+                });
+
+                this.loading = true;
+                this.update();
+                this.checkselected(true);
+
+            }.bind(this));
+
         }
 
         load() {
@@ -399,10 +453,23 @@
                 options.filter = this.filter;
             }
 
-            options.limit = limit;
-            options.skip  = (this.page - 1) * limit;
+            if (this.limit) {
+                options.limit = this.limit;
+            }
+
+            options.skip  = (this.page - 1) * this.limit;
 
             this.loading = true;
+
+            window.history.pushState(
+                null, null,
+                App.route(['/collections/entries/', this.collection.name, '?q=', JSON.stringify({
+                    page: this.page || null,
+                    filter: this.filter || null,
+                    sort: this.sort || null,
+                    limit: this.limit
+                })].join(''))
+            );
 
             return App.request('/collections/find', {collection:this.collection.name, options:options}).then(function(data){
 
@@ -413,8 +480,7 @@
                 this.page    = data.page;
                 this.count   = data.count;
 
-                this.ready    = true;
-                this.loadmore = data.entries.length && data.entries.length == limit;
+                this.loadmore = data.entries.length && data.entries.length == this.limit;
 
                 this.checkselected();
                 this.loading = false;
@@ -429,6 +495,8 @@
         }
 
         updatesort(e, field) {
+
+            e.preventDefault();
 
             field = e.target.getAttribute('data-sort');
 
@@ -449,15 +517,24 @@
                     col = field;
             }
 
+            if (e.metaKey || e.ctrlKey) {
+                // multi select
+            } else {
+
+                var sort = {};
+
+                if (this.sort[col]) {
+                    sort[col] = this.sort[col];
+                }
+
+                this.sort = sort;
+            }
+
             if (!this.sort[col]) {
-                this.sort      = {};
                 this.sort[col] = 1;
             } else {
                 this.sort[col] = this.sort[col] == 1 ? -1 : 1;
             }
-
-            this.sortedBy = field;
-            this.sortedOrder = this.sort[col];
 
             this.entries = [];
             this.load();
@@ -496,6 +573,12 @@
                 this.page = 1;
                 this.load();
             }
+        }
+
+        updateLimit(limit) {
+            this.limit = limit;
+            this.page = 1;
+            this.load();
         }
 
         duplicateEntry(e, collection, entry, idx) {
@@ -552,20 +635,8 @@
 
         }
 
-        hasFieldAccess(field) {
-
-            var acl = this.fieldsidx[field] && this.fieldsidx[field].acl || [];
-
-            if (field == '_modified' ||
-                App.$data.user.group == 'admin' ||
-                !acl ||
-                (Array.isArray(acl) && !acl.length) ||
-                acl.indexOf(App.$data.user.group) > -1 ||
-                acl.indexOf(App.$data.user._id) > -1
-
-            ) { return true; }
-
-            return false;
+        batchedit() {
+            this.tags['entries-batchedit'].open(this.entries, this.selected)
         }
 
     </script>

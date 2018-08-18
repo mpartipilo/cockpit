@@ -27,7 +27,7 @@
 
                             <img class="uk-margin-small-right uk-svg-adjust" src="@url(isset($singleton['icon']) && $singleton['icon'] ? 'assets:app/media/icons/'.$singleton['icon']:'singletons:icon.svg')" width="18px" alt="icon" data-uk-svg>
 
-                            {{ @$singleton['label'] ? $singleton['label'] : $singleton['name'] }}
+                            {{ htmlspecialchars(@$singleton['label'] ? $singleton['label'] : $singleton['name']) }}
                         </a>
                     </li>
                     @endforeach
@@ -35,9 +35,11 @@
 
             </div>
 
-            <div class="uk-panel-box-footer">
-                <a href="@route('/singletons')">@lang('See all')</a>
+            @if(count($singletons) > 5)
+            <div class="uk-panel-box-footer uk-text-center">
+                <a class="uk-button uk-button-small uk-button-link" href="@route('/singletons')">@lang('Show all')</a>
             </div>
+            @endif
 
         @else
 

@@ -502,7 +502,7 @@ class App implements \ArrayAccess {
      * @param $path
      * @return bool|string
      */
-    public function pathToUrl($path) {
+    public function pathToUrl($path, $full = false) {
 
         $url = false;
 
@@ -513,13 +513,11 @@ class App implements \ArrayAccess {
 
             $url = '/'.ltrim(str_replace($root, '', $file), '/');
             $url = implode('/', array_map('rawurlencode', explode('/', $url)));
-        }
 
-        /*
-        if ($this->registry['base_port'] != "80") {
-            $url = $this->registry['site_url'].$url;
+            if ($full) {
+                $url = rtrim($this['site_url'], '/').$url;
+            }
         }
-        */
 
         return $url;
     }
@@ -551,6 +549,14 @@ class App implements \ArrayAccess {
     * @return void
     */
     public function on($event, $callback, $priority = 0){
+
+        if (is_array($event)) {
+
+            foreach ($event as &$evt) {
+                $this->on($evt, $callback, $priority);
+            }
+            return $this;
+        }
 
         if (!isset($this->events[$event])) $this->events[$event] = [];
 
@@ -724,7 +730,24 @@ class App implements \ArrayAccess {
     public function param($index=null, $default = null, $source = null) {
 
         $src = $source ? $source : $_REQUEST;
-        return fetch_from_array($src, $index, $default);
+        $cast = null;
+
+        if (strpos($index, ':') !== false) {
+            list($index, $cast) = explode(':', $index, 2);
+        }
+
+        $value = fetch_from_array($src, $index, $default);
+
+        if ($cast) {
+
+            if (in_array($cast, ['bool', 'boolean']) && is_string($value) && in_array($cast, ['true', 'false'])) {
+                $value = $value == 'true' ? true : false;
+            }
+
+            settype($value, $cast);
+        }
+
+        return $value;
     }
 
     /**

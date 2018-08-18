@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="uk-height-1-1 uk-bg-dark" lang="en" data-base="@base('/')" data-route="@route('/')">
+<html lang="{{ $app('i18n')->locale }}" class="uk-height-1-1 uk-bg-dark" data-base="@base('/')" data-route="@route('/')" data-locale="{{ $app('i18n')->locale }}">
 <head>
     <meta charset="UTF-8">
     <title>@lang('Password Reset!')</title>
@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="uk-text-center uk-animation-slide-bottom" if="{ reset }">
-                    <a class="uk-button uk-button-outline uk-button-large uk-button-primary uk-width-1-1" href="{{ $app->retrieve('cockpit.login.url', $app->routeUrl('/auth/login')) }}">@lang('Go to login')</a>
+                    <a class="uk-button uk-button-outline uk-button-large uk-button-primary uk-width-1-1" href="{{ $app->retrieve('cockpit.login.url', $app->routeUrl('/auth/login')) }}">@lang('Back to Login')</a>
                 </div>
 
                 <div class="uk-form-row" show="{ !reset }">
@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="uk-margin-top" show="{ !reset }">
-                    <button class="uk-button uk-button-outline uk-button-large uk-button-primary uk-width-1-1">@lang('Reset')</button>
+                    <button class="uk-button uk-button-outline uk-button-large uk-text-primary uk-width-1-1">@lang('Reset')</button>
                 </div>
             </div>
 
@@ -90,7 +90,7 @@
                     this.update();
 
                 }.bind(this)).catch(function(data) {
-                    
+
                     this.error = 'Reset failed';
 
                     App.$('#login-dialog').removeClass('uk-animation-shake');

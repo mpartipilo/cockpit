@@ -5,7 +5,12 @@
  */
 define('COCKPIT_START_TIME', microtime(true));
 
-if (!defined('COCKPIT_CLI')) define('COCKPIT_CLI', PHP_SAPI == 'cli');
+// Autoload vendor libs
+include(__DIR__.'/lib/vendor/autoload.php');
+
+if (!defined('COCKPIT_CLI')) {
+    define('COCKPIT_CLI', PHP_SAPI == 'cli');
+}
 
 /*
  * Autoload from lib folder (PSR-0)
@@ -15,6 +20,9 @@ spl_autoload_register(function($class){
     $class_path = __DIR__.'/lib/'.str_replace('\\', '/', $class).'.php';
     if(file_exists($class_path)) include_once($class_path);
 });
+
+// load .env file if exists
+DotEnv::load(__DIR__);
 
 // check for custom defines
 if (file_exists(__DIR__.'/defines.php')) {
@@ -81,8 +89,8 @@ function cockpit($module = null) {
             'session.name' => md5(__DIR__),
             'sec-key'      => 'c3b40c4c-db44-s5h7-a814-b4931a15e5e1',
             'i18n'         => 'en',
-            'database'     => [ "server" => "mongolite://".(COCKPIT_STORAGE_FOLDER."/data"), "options" => ["db" => "cockpitdb"] ],
-            'memory'       => [ "server" => "redislite://".(COCKPIT_STORAGE_FOLDER."/data/cockpit.memory.sqlite"), "options" => [] ],
+            'database'     => ['server' => 'mongolite://'.(COCKPIT_STORAGE_FOLDER.'/data'), 'options' => ['db' => 'cockpitdb'] ],
+            'memory'       => ['server' => 'redislite://'.(COCKPIT_STORAGE_FOLDER.'/data/cockpit.memory.sqlite'), 'options' => [] ],
 
             'paths'         => [
                 '#root'     => COCKPIT_DIR,
@@ -98,7 +106,9 @@ function cockpit($module = null) {
                 '#config'   => COCKPIT_CONFIG_DIR,
                 'assets'    => COCKPIT_DIR.'/assets',
                 'site'      => COCKPIT_SITE_DIR
-            ]
+            ],
+
+            'filestorage' => []
 
         ], is_array($customconfig) ? $customconfig : []);
 
@@ -117,6 +127,62 @@ function cockpit($module = null) {
             return $client;
         });
 
+        // file storage
+        $app->service('filestorage', function($name) use($config, $app) {
+
+            $storages = array_replace_recursive([
+
+                'root' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#root:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#root:', true)
+                ],
+
+                'site' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('site:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('site:', true)
+                ],
+
+                'tmp' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#tmp:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#tmp:', true)
+                ],
+
+                'thumbs' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#thumbs:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#thumbs:', true)
+                ],
+
+                'uploads' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#uploads:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#uploads:', true)
+                ],
+
+                'assets' => [
+                    'adapter' => 'League\Flysystem\Adapter\Local',
+                    'args' => [$app->path('#uploads:')],
+                    'mount' => true,
+                    'url' => $app->pathToUrl('#uploads:', true)
+                ]
+
+            ], $config['filestorage']);
+
+            $app->trigger('cockpit.filestorages.init', [&$storages]);
+
+            $filestorage = new FileStorage($storages);
+
+            return $filestorage;
+        });
+
         // key-value storage
         $app->service('memory', function() use($config) {
             $client = new SimpleStorage\Client($config['memory']['server'], $config['memory']['options']);
@@ -124,26 +190,26 @@ function cockpit($module = null) {
         });
 
         // mailer service
-        $app->service("mailer", function() use($app, $config){
+        $app->service('mailer', function() use($app, $config){
             $options   = isset($config['mailer']) ? $config['mailer']:[];
-            $mailer    = new \Mailer(isset($options["transport"]) ? $options['transport'] : 'mail', $options);
+            $mailer    = new \Mailer($options['transport'] ?? 'mail', $options);
             return $mailer;
         });
 
         // set cache path
         $tmppath = $app->path('#tmp:');
 
-        $app("cache")->setCachePath($tmppath);
+        $app('cache')->setCachePath($tmppath);
         $app->renderer->setCachePath($tmppath);
 
         // i18n
-        $app("i18n")->locale = isset($config['i18n']) ? $config['i18n'] : 'en';
+        $app("i18n")->locale = $config['i18n'] ?? 'en';
 
         // load modules
         $app->loadModules(array_merge([
             COCKPIT_DIR.'/modules',  # core
             COCKPIT_DIR.'/addons' # addons
-        ], isset($config['loadmodules']) ? (array) $config['loadmodules'] : []));
+        ], $config['loadmodules'] ?? []));
 
         // load config global bootstrap
         if ($custombootfile = $app->path('#config:bootstrap.php')) {

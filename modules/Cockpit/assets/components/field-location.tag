@@ -21,9 +21,9 @@
         var locale = document.documentElement.lang.toUpperCase();
 
         var loadApi = App.assets.require([
-            'https://cdn.jsdelivr.net/leaflet/1.0.0/leaflet.css',
-            'https://cdn.jsdelivr.net/places.js/1/places.min.js',
-            'https://cdn.jsdelivr.net/leaflet/1.0.0/leaflet.js'
+            'https://cdn.jsdelivr.net/npm/leaflet@1.3.1/dist/leaflet.min.css',
+            'https://cdn.jsdelivr.net/npm/leaflet@1.3.1/dist/leaflet.min.js',
+            'https://cdn.jsdelivr.net/npm/places.js@1.7.2/dist/cdn/places.min.js'
         ]);
 
         var $this = this, defaultpos = {lat:53.55909862554551, lng:9.998652343749995};
@@ -80,6 +80,23 @@
                         map.panTo(marker.getLatLng());
                         pla.close();
                         pla.setVal('');
+                    }).on('suggestions', function (e) {
+                      var coords = e.query.match(/^(\-?\d+(?:\.\d+)?),\s*(\-?\d+(?:\.\d+)?)$/);
+
+                      if (!coords) {
+                        return;
+                      }
+
+                      var latlng = {
+                        lat: parseFloat(coords[1]),
+                        lng: parseFloat(coords[2])
+                      };
+
+                      $this.$setValue(latlng);
+                      marker.setLatLng(latlng).update();
+                      map.panTo(marker.getLatLng());
+                      pla.close();
+                      pla.setVal('');
                     });
 
                 }, 50);
